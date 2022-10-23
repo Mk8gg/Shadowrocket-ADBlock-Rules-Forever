@@ -1,0 +1,40 @@
+name: Build Shadowrocket Rules
+
+on:
+  schedule:
+    # 每日8时开始
+    - cron:  '0 23 * * *'
+  
+  push:
+    branches:
+      - master
+    paths-ignore: 
+      - '**.md'
+      - 'LICENSE'
+
+  workflow_dispatch:
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Install requirements
+        run: pip3 install -r requirements.txt
+
+      - name: Run auto-build.sh
+        run: ./factory/auto_build.sh
+        
+      - name: Remove commits
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan latest_branch
+          git add -A
+          git commit -am "Nightly build"
+          git branch -D master
+          git branch -m master
+          git push -f origin master
+          
